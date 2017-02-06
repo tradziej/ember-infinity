@@ -17,6 +17,14 @@ const RouteMixin = Ember.Mixin.create({
 
   /**
     @private
+    @property _storeName
+    @type String
+    @default 'store'
+  */
+  _storeName: 'store',
+
+  /**
+    @private
     @property _perPage
     @type Integer
     @default 25
@@ -151,7 +159,7 @@ const RouteMixin = Ember.Mixin.create({
       throw new Ember.Error("Ember Infinity: You are using an unsupported version of Ember Data.  Please upgrade to at least 1.13.4 or downgrade to 1.0.0-beta.19.2");
     }
 
-    if (Ember.isEmpty(this.get('store')) || Ember.isEmpty(this.get('store')[this._storeFindMethod])){
+    if (Ember.isEmpty(this.get(this._storeName)) || Ember.isEmpty(this.get(this._storeName)[this._storeFindMethod])){
       throw new Ember.Error("Ember Infinity: Ember Data store is not available to infinityModel");
     }
 
@@ -180,16 +188,20 @@ const RouteMixin = Ember.Mixin.create({
     this._ensureCompatibility();
 
     options = options ? assign({}, options) : {};
+    const storeName = options.storeName || this.get('_storeName');
+
     const startingPage = options.startingPage === undefined ? 0 : options.startingPage-1;
 
     const perPage      = options.perPage || this.get('_perPage');
     const modelPath    = options.modelPath || this.get('_modelPath');
 
+    delete options.storeName;
     delete options.startingPage;
     delete options.perPage;
     delete options.modelPath;
 
     this.setProperties({
+      _storeName: storeName,
       currentPage: startingPage,
       _firstPageLoaded: false,
       _perPage: perPage,
@@ -271,7 +283,7 @@ const RouteMixin = Ember.Mixin.create({
     const nextPage    = this.incrementProperty('currentPage');
     const params      = this._buildParams(nextPage);
 
-    return this.get('store')[this._storeFindMethod](modelName, params).then(
+    return this.get(this._storeName)[this._storeFindMethod](modelName, params).then(
       this._afterInfinityModel(this));
   },
 
